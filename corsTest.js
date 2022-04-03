@@ -1,4 +1,4 @@
-function allowOrigin(url) {
+function block(url) {
     /*
     try {
         const controller = new AbortController();
@@ -17,4 +17,4 @@ function allowOrigin(url) {
     return true;
 }
 
-export { allowOrigin };
+export { block };

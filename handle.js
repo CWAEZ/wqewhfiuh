@@ -1,9 +1,18 @@
-import { bare } from './config.js'
+import { prefix, bare } from './config.js'
+import { block } from './corsTest.js';
 import { scope } from './scope.js';
 import { filterHeaders } from './headers.js';
 
-async function handle(event, url) {
-	console.log(url);
+async function handle(event) {
+	if (/\/aero\//g.test(url))
+		return;
+
+	const url = new URL(event.request.url.split(prefix)[1]);
+
+	//if (block(url))
+	//	return;
+
+	console.log(`${event.request.url} -> ${url.href}`);
 
 	// v2 endpoint can be used when bare is updated
 	const response = await fetch(`${bare}v1/`, {
@@ -24,10 +33,10 @@ async function handle(event, url) {
 		cache: 'no-store'
 	});
 
-	console.log(event.request.headers.get['Content-Type']);
+	const bareHeaders = filterHeaders(JSON.parse(response.headers.get('x-bare-headers')));
 
 	let text;
-	if (event.request.mode === 'navigate' && event.request.destination === 'document') {
+	if (event.request.mode === 'navigate' && event.request.destination === 'document' && bareHeaders['Content-Type'].startsWith('text/html')) {
 		text = await response.text();
 		if (text !== '')
 			text = `
@@ -56,10 +65,10 @@ ${text}
 	else
 		text = response.body;
 
-	return new Response(text, {
+	event.respondWith(new Response(text, {
 		status: response.status,
-		headers: filterHeaders(JSON.parse(response.headers.get('x-bare-headers')))
-	});
+		headers: bareHeaders
+	}));
 }
 
 export { handle };
